@@ -1,2 +1,2 @@
-# vaci
+# scci
 CloudVA CI test repo
