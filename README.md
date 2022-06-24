@@ -1,2 +1,2 @@
 # scci
-CloudVA CI test repo
+CloudVA CI demonstration repo
