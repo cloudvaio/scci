@@ -1,12 +1,16 @@
-name: SCCI Run
-on:
-  workflow_run:
-    workflows: ["SCCI Start"]
-    types:
-      - completed
+name: SCCI
+on: [push]
 jobs:
+  start-scci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: start-scci
+        uses: cloudvaio/workflow-forge-trigger@main
+        env:
+          FORGE_TRIGGER: https://cloudva.io/trigger/22a639a68686143d526ee81f1e92bde4b7ec059b/pull
+          FORGE_SECRET:  97fc31ba6b9407c8565fc5463124d862082a8cce
   run-scci:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: [start-scci]
     runs-on: scci
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
@@ -20,3 +24,13 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+  stop-scci:
+    needs: [run-scci]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: stop-scci
+        uses: cloudvaio/workflow-forge-trigger@main
+        env:
+          FORGE_TRIGGER: https://cloudva.io/trigger/febcc237ea2a68cfa5f5061cb8abf2d511f47755/pull
+          FORGE_SECRET:  97fc31ba6b9407c8565fc5463124d862082a8cce
