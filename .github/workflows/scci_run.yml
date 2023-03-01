@@ -2,6 +2,8 @@ name: SCCI Run
 on:
   workflow_run:
     workflows: ["SCCI Start"]
+    types:
+      - completed
 jobs:
   run-scci:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
