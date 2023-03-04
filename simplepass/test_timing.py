@@ -1,3 +1,4 @@
+import sys
 import chipwhisperer as cw
 from PATools import *
 def reset():
@@ -87,16 +88,25 @@ def attack_withpower(pattern):
       print("Could not find byte at offset:",i)
       return False
 def test_nopower(secr,pswd):
-  (_,_,_) = getone(st,secr)
+  (_,_,_) = getone(secr)
   off1 = st.scope.adc.trig_count
-  (_,_,_) = getone(st,pswd)
+  (_,_,_) = getone(pswd)
   off2 = st.scope.adc.trig_count
-  return off1==off2
-def test_withpower(secr,pswd,patt)
-  (trc,_,_) = getone(st,secr)
+  if off1==off2:
+    return 0
+  return 1
+def test_withpower(secr,pswd,patt):
+  (trc,_,_) = getone(secr)
   off1 = corroff(trc,patt)[0]
-  (trc,_,_) = getone(st,pswd)
+  (trc,_,_) = getone(pswd)
   off2 = corroff(trc,patt)[0]
-  return off1==off2
+  if off1==off2:
+    return 0
+  return 1
+
 st = ScopeTarget((), (cw.targets.SimpleSerial,))
 flash('./simplepass-CW308_STM32F3.hex')
+
+secr = "verysafe\x00".encode('utf-8')
+pswd = "xxxxxxxx\x00".encode('utf-8')
+sys.exit(test_nopower(secr,pswd))
