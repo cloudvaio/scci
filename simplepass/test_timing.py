@@ -27,14 +27,9 @@ def random_bytes(length=9):
     return bytearray(random.getrandbits(8) for _ in range(length))
 def test():
   (_,rx,_) = getone(random_bytes())
-  print(rx)
-  print("cycles:",st.scope.adc.trig_count)
-  (_,rx,_) = getone(b"veryxxxx\x00")
-  print(rx)
-  print("cycles:",st.scope.adc.trig_count)
+  print("@flash",rx)
   (_,rx,_) = getone(b"verysafe\x00")
-  print(rx)
-  print("cycles:",st.scope.adc.trig_count)
+  print("@flash",rx)
 def flash(fw):
   st.scope.default_setup()
   prog = cw.programmers.STM32FProgrammer
@@ -96,16 +91,22 @@ def test_nopower(secr,pswd):
   off1 = st.scope.adc.trig_count
   (_,_,_) = getone(pswd)
   off2 = st.scope.adc.trig_count
+  print("Offsets:",off1,off2)
   if off1==off2:
+    print("Test Pass")
     return 0
+  print("Test Fail")
   return 1
 def test_withpower(secr,pswd,patt):
   (trc,_,_) = getone(secr)
   off1 = corroff(trc,patt)[0]
   (trc,_,_) = getone(pswd)
   off2 = corroff(trc,patt)[0]
+  print("Offsets:",off1,off2)
   if off1==off2:
+    print("Test Pass")
     return 0
+  print("Test Fail")
   return 1
 
 st = ScopeTarget((), (cw.targets.SimpleSerial,))
