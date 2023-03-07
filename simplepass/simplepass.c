@@ -18,8 +18,8 @@ volatile int door;
 void validate(uint8_t* pass)
 {
   door = DOOR_CLOSED;
-  volatile uint64_t good = SAFEBOOL_TRUE;
-  //volatile uint32_t good = SAFEBOOL_TRUE;
+  //volatile uint64_t good = SAFEBOOL_TRUE;
+  volatile uint32_t good = SAFEBOOL_TRUE;
   for(int i=0;i<sizeof(secr);i++)
   {
     if(pass[i] != secr[i])
@@ -27,8 +27,8 @@ void validate(uint8_t* pass)
       good = SAFEBOOL_FALSE;
     }
   }
-  if(good == (uint64_t)SAFEBOOL_TRUE)
-  //if(good == (uint32_t)SAFEBOOL_TRUE)
+  //if(good == (uint64_t)SAFEBOOL_TRUE)
+  if(good == (uint32_t)SAFEBOOL_TRUE)
   {
     door = DOOR_OPEN;
   }
