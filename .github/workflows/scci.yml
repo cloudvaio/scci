@@ -19,14 +19,13 @@ jobs:
         run: |
           make PLATFORM=CW308_STM32F3
           python3 test_timing.py
-  stop-scci:
-    needs: [run-scci]
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      run: echo "Shutdown disabled for now!"
-      #- name: stop-scci
-      #  uses: cloudvaio/workflow-forge-trigger@main
-      #  env:
-      #    FORGE_TRIGGER: https://cloudva.io/trigger/febcc237ea2a68cfa5f5061cb8abf2d511f47755/pull
-      #    FORGE_SECRET:  ${{ secrets.SCCI_SECRET }}
+#  stop-scci:
+#    needs: [run-scci]
+#    if: ${{ always() }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: stop-scci
+#        uses: cloudvaio/workflow-forge-trigger@main
+#        env:
+#          FORGE_TRIGGER: https://cloudva.io/trigger/febcc237ea2a68cfa5f5061cb8abf2d511f47755/pull
+#          FORGE_SECRET:  ${{ secrets.SCCI_SECRET }}
