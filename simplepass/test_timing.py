@@ -28,6 +28,10 @@ def random_bytes(length=9):
 def test():
   (_,rx,_) = getone(random_bytes())
   print(rx)
+  print("cycles:",st.scope.adc.trig_count)
+  (_,rx,_) = getone(b"veryxxxx\x00")
+  print(rx)
+  print("cycles:",st.scope.adc.trig_count)
   (_,rx,_) = getone(b"verysafe\x00")
   print(rx)
   print("cycles:",st.scope.adc.trig_count)

@@ -24,8 +24,9 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: stop-scci
-        uses: cloudvaio/workflow-forge-trigger@main
-        env:
-          FORGE_TRIGGER: https://cloudva.io/trigger/febcc237ea2a68cfa5f5061cb8abf2d511f47755/pull
-          FORGE_SECRET:  ${{ secrets.SCCI_SECRET }}
+      run: echo "Shutdown disabled for now!"
+      #- name: stop-scci
+      #  uses: cloudvaio/workflow-forge-trigger@main
+      #  env:
+      #    FORGE_TRIGGER: https://cloudva.io/trigger/febcc237ea2a68cfa5f5061cb8abf2d511f47755/pull
+      #    FORGE_SECRET:  ${{ secrets.SCCI_SECRET }}
